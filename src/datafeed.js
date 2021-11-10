@@ -1,44 +1,30 @@
-import { makeApiRequest, generateSymbol, parseFullSymbol } from "./helpers.js";
+import {
+  makeApiRequest,
+  makeApiRequestFromCryptoCompare,
+  makeApiRequestFromLocal,
+  generateSymbol,
+  parseFullSymbol,
+  getConfigurationData,
+} from "./helpers.js";
 import { subscribeOnStream, unsubscribeFromStream } from "./streaming.js";
 
 const lastBarsCache = new Map();
 
-const configurationData = {
-  supported_resolutions: ["1D", "1W", "1M"],
-  exchanges: [
-    {
-      value: "Bitfinex",
-      name: "Bitfinex",
-      desc: "Bitfinex",
-    },
-    {
-      // `exchange` argument for the `searchSymbols` method, if a user selects this exchange
-      value: "Kraken",
-
-      // filter name
-      name: "Kraken",
-
-      // full exchange name displayed in the filter popup
-      desc: "Kraken bitcoin exchange",
-    },
-  ],
-  symbols_types: [
-    {
-      name: "crypto",
-
-      // `symbolType` argument for the `searchSymbols` method, if a user selects this symbol type
-      value: "crypto",
-    },
-    // ...
-  ],
-};
+const configurationData = getConfigurationData("local");
 
 async function getAllSymbols() {
-  const data = await makeApiRequest("data/v3/all/exchanges");
+  // const data = await makeApiRequestFromCryptoCompare("data/v3/all/exchanges");
+  const data = await makeApiRequest("api/stock/all/exchange");
+  // const data = await makeApiRequestFromLocal("data");
+
   let allSymbols = [];
+
+  console.log("Data is: " + data.Data);
 
   for (const exchange of configurationData.exchanges) {
     const pairs = data.Data[exchange.value].pairs;
+    debugger;
+    const value = data.Data[exchange.value];
 
     for (const leftPairPart of Object.keys(pairs)) {
       const symbols = pairs[leftPairPart].map((rightPairPart) => {
@@ -141,6 +127,8 @@ export default {
     const query = Object.keys(urlParameters)
       .map((name) => `${name}=${encodeURIComponent(urlParameters[name])}`)
       .join("&");
+
+    console.log("query value: " + query);
     try {
       const data = await makeApiRequest(`data/histoday?${query}`);
       if (
