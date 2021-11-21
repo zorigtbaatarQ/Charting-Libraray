@@ -1,5 +1,5 @@
 import {
-  makeApiRequest,
+  makeApiRequestFrom,
   makeApiRequestFromCryptoCompare,
   makeApiRequestFromLocal,
   generateSymbol,
@@ -13,18 +13,16 @@ const lastBarsCache = new Map();
 const configurationData = getConfigurationData("local");
 
 async function getAllSymbols() {
-  // const data = await makeApiRequestFromCryptoCompare("data/v3/all/exchanges");
-  const data = await makeApiRequest("api/stock/all/exchange");
+  const data = await makeApiRequestFromLocal("data/v3/all/exchanges");
+  // const data = await makeApiRequest("api/stock/all/exchange");
   // const data = await makeApiRequestFromLocal("data");
 
   let allSymbols = [];
-
-  console.log("Data is: " + data.Data);
+  console.log("Data is: " + data.data);
 
   for (const exchange of configurationData.exchanges) {
-    const pairs = data.Data[exchange.value].pairs;
-    debugger;
-    const value = data.Data[exchange.value];
+    const pairs = data.data[exchange.value].pairs;
+    const value = data.data[exchange.value];
 
     for (const leftPairPart of Object.keys(pairs)) {
       const symbols = pairs[leftPairPart].map((rightPairPart) => {
@@ -77,9 +75,11 @@ export default {
   ) => {
     console.log("[resolveSymbol]: Method call", symbolName);
     const symbols = await getAllSymbols();
+
     const symbolItem = symbols.find(
-      ({ full_name }) => full_name === symbolName
+      ({ full_name }) => full_name === "chkh:CHKH/MNT"
     );
+
     if (!symbolItem) {
       console.log("[resolveSymbol]: Cannot resolve symbol", symbolName);
       onResolveErrorCallback("cannot resolve symbol");
@@ -117,12 +117,10 @@ export default {
     const { from, to, firstDataRequest } = periodParams;
     console.log("[getBars]: Method call", symbolInfo, resolution, from, to);
     const parsedSymbol = parseFullSymbol(symbolInfo.full_name);
+
     const urlParameters = {
-      e: parsedSymbol.exchange,
-      fsym: parsedSymbol.fromSymbol,
-      tsym: parsedSymbol.toSymbol,
+      fTs: from,
       toTs: to,
-      limit: 2000,
     };
     const query = Object.keys(urlParameters)
       .map((name) => `${name}=${encodeURIComponent(urlParameters[name])}`)
@@ -130,10 +128,10 @@ export default {
 
     console.log("query value: " + query);
     try {
-      const data = await makeApiRequest(`data/histoday?${query}`);
+      const data = await makeApiRequestFromLocal(`data/histoday?${query}`);
       if (
         (data.Response && data.Response === "Error") ||
-        data.Data.length === 0
+        data.data.length === 0
       ) {
         // "noData" should be set if there is no data in the requested period.
         onHistoryCallback([], {
@@ -142,7 +140,7 @@ export default {
         return;
       }
       let bars = [];
-      data.Data.forEach((bar) => {
+      data.data.forEach((bar) => {
         if (bar.time >= from && bar.time < to) {
           bars = [
             ...bars,
@@ -169,34 +167,5 @@ export default {
       console.log("[getBars]: Get error", error);
       onErrorCallback(error);
     }
-  },
-
-  subscribeBars: (
-    symbolInfo,
-    resolution,
-    onRealtimeCallback,
-    subscribeUID,
-    onResetCacheNeededCallback
-  ) => {
-    console.log(
-      "[subscribeBars]: Method call with subscribeUID:",
-      subscribeUID
-    );
-    subscribeOnStream(
-      symbolInfo,
-      resolution,
-      onRealtimeCallback,
-      subscribeUID,
-      onResetCacheNeededCallback,
-      lastBarsCache.get(symbolInfo.full_name)
-    );
-  },
-
-  unsubscribeBars: (subscriberUID) => {
-    console.log(
-      "[unsubscribeBars]: Method call with subscriberUID:",
-      subscriberUID
-    );
-    unsubscribeFromStream(subscriberUID);
   },
 };

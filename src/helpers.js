@@ -1,12 +1,12 @@
 // Make requests to CryptoCompare API
-export async function makeApiRequest(path) {
+export async function makeApiRequestFrom(path) {
   try {
     const external = "http://192.168.1.229:4446/";
     const response = await fetch(external + `${path}`);
 
     return response.json();
   } catch (error) {
-    throw new Error(`CryptoCompare request error: ${error.status}`);
+    throw new Error(`external request error: ${error.status}`);
   }
 }
 
@@ -22,7 +22,7 @@ export async function makeApiRequestFromCryptoCompare(path) {
 
 export async function makeApiRequestFromLocal(path) {
   try {
-    const response = await fetch(`"http://127.0.0.1:8080/"${path}`);
+    const response = await fetch(`http://127.0.0.1:8080/${path}`);
 
     return response.json();
   } catch (error) {
@@ -30,12 +30,12 @@ export async function makeApiRequestFromLocal(path) {
   }
 }
 
-export function getConfigurationData(value = "local") {
+export function getConfigurationData(value) {
   const localConfig = {
     supported_resolutions: ["1D", "1W", "1M"],
     exchanges: [
       {
-        value: "CHKH",
+        value: "chkh",
         name: "Chinggis Khaan Stocks",
         desc: "Chinggis Khaan",
       },

@@ -1,8 +1,7 @@
 import Datafeed from "./datafeed.js";
-import Datafeed_test from "./Datafeed_test.js";
 
 window.tvWidget = new TradingView.widget({
-  symbol: "CHKH:TNL/MNT",
+  symbol: "chkh:TNL/MNT",
   // symbol: "Bitfinex:BTC/USD",
   interval: "1D",
   fullscreen: true,
